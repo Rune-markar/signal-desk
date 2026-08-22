@@ -38,6 +38,24 @@ describe('same-origin mutation guard', () => {
     }))).toBe(true);
   });
 
+  it('allows same-origin mobile form posts when Origin is omitted', () => {
+    expect(isSameOriginRequest(new Request('https://signal.example/authorize', {
+      method: 'POST',
+      headers: {
+        'Sec-Fetch-Site': 'same-origin'
+      }
+    }))).toBe(true);
+  });
+
+  it('allows a matching Referer when Origin and fetch metadata are omitted', () => {
+    expect(isSameOriginRequest(new Request('https://signal.example/authorize', {
+      method: 'POST',
+      headers: {
+        Referer: 'https://signal.example/authorize?client_id=chatgpt'
+      }
+    }))).toBe(true);
+  });
+
   it('rejects missing and cross-origin mutation context', () => {
     expect(isSameOriginRequest(new Request('https://signal.example/api/monitors', {
       method: 'POST'

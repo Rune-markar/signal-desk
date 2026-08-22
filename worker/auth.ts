@@ -271,12 +271,27 @@ export function isSameOriginRequest(request: Request): boolean {
   if (fetchSite && !['same-origin', 'none'].includes(fetchSite)) return false;
 
   const origin = request.headers.get('Origin');
-  if (!origin) return false;
-  try {
-    return new URL(origin).origin === new URL(request.url).origin;
-  } catch {
-    return false;
+  if (origin) {
+    try {
+      return new URL(origin).origin === new URL(request.url).origin;
+    } catch {
+      return false;
+    }
   }
+
+  const referer = request.headers.get('Referer');
+  if (referer) {
+    try {
+      return new URL(referer).origin === new URL(request.url).origin;
+    } catch {
+      return false;
+    }
+  }
+
+  // Some mobile browsers omit Origin on same-origin HTML form submissions.
+  // Sec-Fetch-Site is a browser-controlled header and still distinguishes the
+  // legitimate form POST from a cross-site CSRF attempt.
+  return fetchSite === 'same-origin';
 }
 
 export function makeCsrfCookie(path = '/authorize'): { cookie: string; token: string } {
