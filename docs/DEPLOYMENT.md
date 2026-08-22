@@ -5,7 +5,7 @@ GitHub Pages版はローカル試作モードのまま維持できます。自�
 ## 必要なもの
 
 - CloudflareアカウントとWranglerログイン
-- OpenAI APIキー
+- OpenAI APIキー（参照先URLなしで公開Web検索する場合だけ）
 - 十分に長いSignal Deskログイン用パスフレーズ
 - Web Pushを使う場合はVAPID鍵ペア
 
@@ -64,6 +64,8 @@ VAPID_PRIVATE_KEY=<生成した秘密鍵>
 VAPID_SUBJECT=mailto:admin@example.com
 ```
 
+`OPENAI_API_KEY`は任意です。省略しても参照先URL付き監視はCloudflare Workers AIで動きます。参照先URLなしで公開Web検索する監視には設定してください。
+
 deploy後も`.prod.secrets`は安全に保管するか削除してください。`VAPID_SUBJECT`には管理者のメールアドレス、または管理サイトのHTTPS URLを指定します。
 
 ## 4. D1 migrationとdeploy
@@ -111,7 +113,7 @@ OpenAIの最新の接続手順は、[Build an MCP server](https://developers.ope
 - `npx wrangler tail`でエラーイベントを確認する（tokenや秘密値は出力しない）
 - D1の`runs`で成功・失敗を確認する
 - Cronは15分間隔のため、予定時刻から最大約15分の遅延を見込む
-- OpenAI使用量とCloudflare利用量へ上限・通知を設定する
+- OpenAIを使う場合はOpenAI使用量、常にCloudflare利用量へ上限・通知を設定する
 - PushはChrome/Firefox/Safariの実機HTTPS環境で購読・受信・クリックを確認する
 - custom domainを使う場合も、アプリと`/api`と`/mcp`を同一オリジンに置く
 

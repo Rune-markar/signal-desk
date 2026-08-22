@@ -11,7 +11,7 @@ PWA ── session cookie ── Cloudflare Worker ── D1
                               │                 ├─ monitors
                               │                 ├─ runs
                               │                 └─ notifications
-                              ├─ Cron ── OpenAI Responses API / Web source
+                              ├─ Cron ── Workers AI / Responses API / Web source
                               └─ Web Push ── browser / installed PWA
 ```
 
@@ -35,7 +35,7 @@ Cloudflare Workerからビルド済みPWAを配信すると、同一オリジン
 - D1が正本
 - PWAはサーバー状態を読み、認証済みの同一起動中に通信が切れた場合だけ直前の状態を表示
 - Cronによる定期実行
-- Responses APIによる判定
+- Workers AI、またはResponses APIによる判定
 - アプリ内通知とWeb Push
 - OAuth保護された`/mcp`
 
@@ -104,14 +104,14 @@ Cronは15分ごとに起動し、予定時刻を過ぎた`active`または`error
 - 最大3件を並行処理
 - Push配信は更新時刻が新しい端末購読を最大5件まで対象にする
 - 成功・不一致・失敗をすべて`runs`へ保存
-- APIキー未設定も偽の成功にせず、失敗履歴として保存
+- URLなし監視でOpenAI APIキー未設定の場合も偽の成功にせず、失敗履歴として保存
 - 条件一致通知は判定内容と根拠から`dedupe_key`を作り重複を防ぐ
 
 失敗した監視にも次回予定を設定し、後続Cronで再試行します。
 
-## Responses APIと外部取得
+## Workers AI、Responses APIと外部取得
 
-既定モデルは`gpt-5.6-luna`です。`store: false`、低reasoning、Strict JSON Schemaを使い、次の形だけを受け取ります。
+参照先URLがある場合はWorkerが先に取得し、Cloudflare Workers AIの`@cf/openai/gpt-oss-120b`で判定します。OpenAI APIキーが設定されている環境ではResponses APIを優先し、既定モデル`gpt-5.6-luna`、`store: false`、低reasoning、Strict JSON Schemaを使います。どちらも次の形だけを受け取ります。
 
 ```json
 {
@@ -121,7 +121,7 @@ Cronは15分ごとに起動し、予定時刻を過ぎた`active`または`error
 }
 ```
 
-参照先URLがある場合はWorkerが先に取得し、ない場合だけResponses APIのWeb検索を使います。
+参照先URLがなく現在の公開情報を調べる監視では、OpenAI Responses APIのWeb検索を使います。この場合だけOpenAI APIキーが必要です。URLがなくAPIキーもない場合、モデルの内部知識で現在情報を推測せず失敗として記録します。
 
 外部取得では次を強制します。
 

@@ -20,16 +20,21 @@
       "/signal-desk/*"
     ]
   },
+  "ai": {
+    "binding": "AI"
+  },
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "signal-desk",
-      "migrations_dir": "worker/migrations"
+      "migrations_dir": "worker/migrations",
+      "database_id": "192d9f3b-406a-45bd-89cd-a5feeecde5ae"
     }
   ],
   "kv_namespaces": [
     {
-      "binding": "OAUTH_KV"
+      "binding": "OAUTH_KV",
+      "id": "fb94a70cc01a4d64bcaf34c25028d2dd"
     }
   ],
   "triggers": {

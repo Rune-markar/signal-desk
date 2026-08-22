@@ -27,7 +27,8 @@ GitHub Pagesは秘密情報や定期処理を持てないため、ブラウザ�
 - D1を正本にした端末間同期
 - セッション認証と単一所有者のデータ分離
 - 15分ごとのCronと実行lease
-- OpenAI Responses APIによる条件判定
+- 参照先URL付き監視を判定するCloudflare Workers AI
+- OpenAI Responses APIによる公開Web検索（APIキー設定時）
 - HTTPSページの安全な取得、またはWeb検索
 - 成功・不一致・失敗の履歴と通知重複防止
 - VAPID Web Pushと静かな時間
@@ -71,7 +72,7 @@ npm run db:migrate:local
 npm run dev:worker
 ```
 
-Worker接続モードのアプリは`http://localhost:8787/signal-desk/`、MCPは`http://localhost:8787/mcp`です。`.dev.vars`へ実際の秘密値を設定し、Gitへ追加しないでください。
+Worker接続モードのアプリは`http://localhost:8787/signal-desk/`、MCPは`http://localhost:8787/mcp`です。`.dev.vars`へ実際の秘密値を設定し、Gitへ追加しないでください。OpenAI APIキーを省略した場合も、参照先URLを設定した監視はWorkers AIで実行できます。URLなしで公開Web検索する監視にはOpenAI APIキーが必要です。
 
 ## 品質確認
 
@@ -104,7 +105,7 @@ worker/
   api.ts        Cookie認証されたPWA API
   auth.ts       セッション、同一オリジン、試行制限
   db.ts         D1 repository
-  runner.ts     Responses API、外部取得、Cron、lease
+  runner.ts     Workers AI / Responses API、外部取得、Cron、lease
   push.ts       VAPID Web Push
   mcp.ts        ChatGPT用MCPツール
   oauth.ts      OAuth同意フロー
@@ -117,6 +118,7 @@ worker/
 - Vitest + Testing Library
 - Vite PWA / Workbox
 - Cloudflare Workers + D1 + KV + Cron + Static Assets
+- Cloudflare Workers AI
 - Cloudflare Agents SDKのstateless MCP handler
 - Cloudflare Workers OAuth Provider
 - OpenAI Responses API
