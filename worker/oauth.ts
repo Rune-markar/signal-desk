@@ -9,7 +9,6 @@ import {
   createSession,
   getAuthenticatedUser,
   isLoginSecretConfigured,
-  isSameOriginRequest,
   makeCsrfCookie,
   verifyCsrfToken
 } from './auth';
@@ -212,14 +211,14 @@ async function authorizationGet(request: Request, env: OAuthWorkerEnv): Promise<
 }
 
 async function authorizationPost(request: Request, env: OAuthWorkerEnv): Promise<Response> {
-  if (!isSameOriginRequest(request)) {
-    return htmlResponse(renderPage('不正な要求', '<h1>不正な要求です</h1>'), 403);
-  }
-
   const parsed = await parseAuthorizationRequest(request, env.OAUTH_PROVIDER);
   if (parsed instanceof Response) return parsed;
   const resourceError = requireMcpResource(parsed, request);
   if (resourceError) return resourceError;
+
+  // The consent form uses a random double-submit token in a SameSite=Strict,
+  // HttpOnly cookie. Validate that token directly instead of depending on
+  // optional browser request headers, which Android Chrome may omit.
   const form = await request.formData();
   const csrfToken = form.get('csrf_token');
   if (typeof csrfToken !== 'string' || !(await verifyCsrfToken(request, csrfToken))) {
