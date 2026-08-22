@@ -13,6 +13,7 @@ import {
   verifyCsrfToken
 } from './auth';
 import { MCP_SUPPORTED_SCOPES } from './mcp';
+import { buildContentSecurityPolicy } from './oauth-csp';
 
 export interface OAuthWorkerEnv extends Env {
   OAUTH_PROVIDER: OAuthHelpers;
@@ -34,17 +35,14 @@ function escapeHtml(value: string): string {
     .replace(/'/g, '&#039;');
 }
 
-function securityHeaders(contentType = 'text/html; charset=utf-8'): Headers {
+function securityHeaders(
+  contentType = 'text/html; charset=utf-8',
+  formActionRedirectUri?: string
+): Headers {
   return new Headers({
     'Cache-Control': 'no-store',
     'Content-Type': contentType,
-    'Content-Security-Policy': [
-      "default-src 'none'",
-      "style-src 'unsafe-inline'",
-      "form-action 'self'",
-      "base-uri 'none'",
-      "frame-ancestors 'none'"
-    ].join('; '),
+    'Content-Security-Policy': buildContentSecurityPolicy(formActionRedirectUri),
     'Cross-Origin-Opener-Policy': 'same-origin',
     'Referrer-Policy': 'no-referrer',
     'X-Content-Type-Options': 'nosniff',
@@ -52,8 +50,13 @@ function securityHeaders(contentType = 'text/html; charset=utf-8'): Headers {
   });
 }
 
-function htmlResponse(body: string, status = 200, extraHeaders?: HeadersInit): Response {
-  const headers = securityHeaders();
+function htmlResponse(
+  body: string,
+  status = 200,
+  extraHeaders?: HeadersInit,
+  formActionRedirectUri?: string
+): Response {
+  const headers = securityHeaders('text/html; charset=utf-8', formActionRedirectUri);
   if (extraHeaders) {
     new Headers(extraHeaders).forEach((value, key) => headers.append(key, value));
   }
@@ -207,7 +210,7 @@ async function authorizationGet(request: Request, env: OAuthWorkerEnv): Promise<
        </div>
      </form>`
   );
-  return htmlResponse(body, 200, { 'Set-Cookie': csrf.cookie });
+  return htmlResponse(body, 200, { 'Set-Cookie': csrf.cookie }, parsed.redirectUri);
 }
 
 async function authorizationPost(request: Request, env: OAuthWorkerEnv): Promise<Response> {
