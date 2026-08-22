@@ -6,16 +6,18 @@ import { Modal } from './Modal';
 
 interface MigrationDialogProps {
   onClose: () => void;
-  onImport: (input: MonitorInput) => void;
+  onImport: (input: MonitorInput) => boolean | Promise<boolean>;
+  liveMode?: boolean;
 }
 
-export function MigrationDialog({ onClose, onImport }: MigrationDialogProps) {
+export function MigrationDialog({ onClose, onImport, liveMode = false }: MigrationDialogProps) {
   const [step, setStep] = useState<'input' | 'preview'>('input');
   const [title, setTitle] = useState('');
   const [instruction, setInstruction] = useState('');
   const [frequency, setFrequency] = useState<MonitorFrequency>('daily');
   const [time, setTime] = useState('09:00');
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
   const titleRef = useRef<HTMLInputElement>(null);
   const instructionRef = useRef<HTMLTextAreaElement>(null);
   const timeRef = useRef<HTMLInputElement>(null);
@@ -38,25 +40,32 @@ export function MigrationDialog({ onClose, onImport }: MigrationDialogProps) {
     setStep('preview');
   };
 
-  const importTask = () => {
-    onImport({
-      title,
-      instruction,
-      category: 'report',
-      sourceUrl: '',
-      frequency,
-      time: normalizeScheduleTime(time),
-      severity: 'warning',
-      notificationsEnabled: true,
-      startActive: false,
-      origin: 'chatgpt-manual'
-    });
+  const importTask = async () => {
+    setSaving(true);
+    setError('');
+    try {
+      const saved = await onImport({
+        title,
+        instruction,
+        category: 'report',
+        sourceUrl: '',
+        frequency,
+        time: normalizeScheduleTime(time),
+        severity: 'warning',
+        notificationsEnabled: true,
+        startActive: false,
+        origin: 'chatgpt-manual'
+      });
+      if (!saved) setError('保存できませんでした。接続状態を確認して、もう一度お試しください。');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <Modal
       title="ChatGPTの監視を移行"
-      description="既存タスクの設定内容を手入力で控えます。ChatGPTとは接続・同期されません。"
+      description={`既存タスクの設定内容を手入力で${liveMode ? 'Signal Deskへ保存します' : '控えます'}。ChatGPTとは接続・同期されません。`}
       onClose={onClose}
       size="wide"
     >
@@ -77,7 +86,7 @@ export function MigrationDialog({ onClose, onImport }: MigrationDialogProps) {
             <ClipboardPaste size={20} aria-hidden="true" />
             <div>
               <strong>ChatGPTのScheduledを開いて内容を貼り付けてください</strong>
-              <p>この試作版はChatGPTに接続していないため、内容を確認しながら手動で転記します。</p>
+              <p>ChatGPTの管理タスクを読み取る公開APIはないため、内容を確認しながら手動で転記します。</p>
             </div>
           </div>
           {error ? <div id="migration-error" className="form-alert" role="alert">{error}</div> : null}
@@ -131,14 +140,15 @@ export function MigrationDialog({ onClose, onImport }: MigrationDialogProps) {
               <p>まず停止中で保存します。この保存だけでは監視されません。外部接続とテストが成功してから、ChatGPT側の元タスクを停止してください。</p>
             </div>
           </div>
+          {error ? <div className="form-alert" role="alert">{error}</div> : null}
           <footer className="modal-actions sticky-actions">
-            <button type="button" className="button secondary" onClick={() => setStep('input')}>
+            <button type="button" className="button secondary" onClick={() => setStep('input')} disabled={saving}>
               <ArrowLeft size={18} aria-hidden="true" />
               戻って修正
             </button>
-            <button type="button" className="button primary" onClick={importTask}>
+            <button type="button" className="button primary" onClick={importTask} disabled={saving}>
               <CheckCircle2 size={18} aria-hidden="true" />
-              停止中で保存
+              {saving ? '保存中…' : '停止中で保存'}
             </button>
           </footer>
         </div>

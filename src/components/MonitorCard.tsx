@@ -23,9 +23,11 @@ interface MonitorCardProps {
   onDelete: () => void;
   onToggle: () => void;
   onRun: () => void;
+  liveMode?: boolean;
+  busy?: boolean;
 }
 
-export function MonitorCard({ monitor, runs, onEdit, onDelete, onToggle, onRun }: MonitorCardProps) {
+export function MonitorCard({ monitor, runs, onEdit, onDelete, onToggle, onRun, liveMode = false, busy = false }: MonitorCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -43,15 +45,16 @@ export function MonitorCard({ monitor, runs, onEdit, onDelete, onToggle, onRun }
             onClick={() => setMenuOpen((open) => !open)}
             aria-label={`${monitor.title}のその他の操作`}
             aria-expanded={menuOpen}
+            disabled={busy}
           >
             <MoreHorizontal size={20} aria-hidden="true" />
           </button>
           {menuOpen ? (
             <div className="card-menu">
-              <button onClick={() => { setMenuOpen(false); onEdit(); }}>
+              <button onClick={() => { setMenuOpen(false); onEdit(); }} disabled={busy}>
                 <Pencil size={16} aria-hidden="true" />編集
               </button>
-              <button className="danger-text" onClick={() => { setMenuOpen(false); onDelete(); }}>
+              <button className="danger-text" onClick={() => { setMenuOpen(false); onDelete(); }} disabled={busy}>
                 <Trash2 size={16} aria-hidden="true" />削除
               </button>
             </div>
@@ -100,14 +103,14 @@ export function MonitorCard({ monitor, runs, onEdit, onDelete, onToggle, onRun }
       </div>
 
       <div className="monitor-actions">
-        <button className="button primary compact" onClick={onRun}>
-          <RotateCw size={17} aria-hidden="true" />デモ結果を追加
+        <button className="button primary compact" onClick={onRun} disabled={busy}>
+          <RotateCw size={17} aria-hidden="true" />{busy ? '処理中…' : liveMode ? '今すぐ確認' : 'デモ結果を追加'}
         </button>
-        <button className="button secondary compact" onClick={onToggle}>
+        <button className="button secondary compact" onClick={onToggle} disabled={busy}>
           {monitor.status === 'paused' ? <Play size={17} aria-hidden="true" /> : <Pause size={17} aria-hidden="true" />}
           {monitor.status === 'paused' ? '再開' : '一時停止'}
         </button>
-        <button className="button ghost compact edit-button" onClick={onEdit}>
+        <button className="button ghost compact edit-button" onClick={onEdit} disabled={busy}>
           <Pencil size={17} aria-hidden="true" />編集
         </button>
       </div>

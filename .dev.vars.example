@@ -1,0 +1,9 @@
+# Copy this file to .dev.vars for local Worker development.
+# Use a long, unique passphrase. Never commit the real values.
+APP_LOGIN_SECRET=replace-with-a-long-random-passphrase
+OPENAI_API_KEY=replace-with-an-openai-api-key
+
+# Generate a Web Push VAPID key pair and keep the private key server-side.
+VAPID_PUBLIC_KEY=replace-with-a-vapid-public-key
+VAPID_PRIVATE_KEY=replace-with-a-vapid-private-key
+VAPID_SUBJECT=mailto:admin@example.com

@@ -12,6 +12,8 @@ interface InboxPageProps {
   onRead: (notificationId: string) => void;
   onReadAll: () => void;
   onSnooze: (notificationId: string) => void;
+  liveMode?: boolean;
+  busy?: boolean;
 }
 
 function notificationStatusLabel(notification: AlertNotification): string {
@@ -20,7 +22,7 @@ function notificationStatusLabel(notification: AlertNotification): string {
   return '既読';
 }
 
-export function InboxPage({ state, onRead, onReadAll, onSnooze }: InboxPageProps) {
+export function InboxPage({ state, onRead, onReadAll, onSnooze, liveMode = false, busy = false }: InboxPageProps) {
   const [filter, setFilter] = useState<InboxFilter>('all');
   const unreadCount = state.notifications.filter((notification) => notification.status === 'unread').length;
   const filtered = useMemo(
@@ -33,9 +35,9 @@ export function InboxPage({ state, onRead, onReadAll, onSnooze }: InboxPageProps
       <PageHeader
         eyebrow="INBOX"
         title="通知"
-        description="条件に一致した内容、取得失敗、手動確認の結果を確認できます。"
+        description="条件に一致した通知を確認できます。取得失敗を含むすべての結果は「実行履歴」に残ります。"
         actions={
-          <button className="button secondary" onClick={onReadAll} disabled={unreadCount === 0}>
+          <button className="button secondary" onClick={onReadAll} disabled={unreadCount === 0 || busy}>
             <CheckCheck size={18} aria-hidden="true" />すべて既読
           </button>
         }
@@ -61,7 +63,7 @@ export function InboxPage({ state, onRead, onReadAll, onSnooze }: InboxPageProps
         <section className="empty-state">
           <span className="empty-icon"><BellOff size={28} aria-hidden="true" /></span>
           <h2>{filter === 'unread' ? '未読通知はありません' : '該当する通知はありません'}</h2>
-          <p>{filter === 'unread' ? '外部接続後に新しい通知が届くと、ここに表示されます。' : '別の表示条件を選んでください。'}</p>
+          <p>{filter === 'unread' ? liveMode ? '新しい監視通知が届くと、ここに表示されます。' : '外部接続後に新しい通知が届くと、ここに表示されます。' : '別の表示条件を選んでください。'}</p>
         </section>
       ) : (
         <section className="notification-list" aria-label="通知一覧">
@@ -87,12 +89,12 @@ export function InboxPage({ state, onRead, onReadAll, onSnooze }: InboxPageProps
                 ) : null}
                 <div className="notification-actions">
                   {notification.status !== 'read' ? (
-                    <button className="button secondary compact" onClick={() => onRead(notification.id)}>
+                    <button className="button secondary compact" onClick={() => onRead(notification.id)} disabled={busy}>
                       <CheckCheck size={17} />既読にする
                     </button>
                   ) : null}
                   {notification.status !== 'snoozed' ? (
-                    <button className="button ghost compact" onClick={() => onSnooze(notification.id)}>
+                    <button className="button ghost compact" onClick={() => onSnooze(notification.id)} disabled={busy}>
                       <Clock3 size={17} />1時間スヌーズ
                     </button>
                   ) : null}

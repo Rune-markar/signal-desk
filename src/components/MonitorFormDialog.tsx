@@ -2,12 +2,15 @@ import { Bell, Clock3, Globe2, Save, Target } from 'lucide-react';
 import { useMemo, useRef, useState, type FormEvent } from 'react';
 import type { Monitor, MonitorCategory, MonitorFrequency, MonitorInput, MonitorSeverity } from '../domain/model';
 import { isClockTime, normalizeScheduleTime } from '../domain/schedule';
+import { isSafePublicHttpsUrl } from '../domain/publicUrl';
 import { Modal } from './Modal';
 
 interface MonitorFormDialogProps {
   monitor?: Monitor;
   onClose: () => void;
-  onSave: (input: MonitorInput) => void;
+  onSave: (input: MonitorInput) => boolean | Promise<boolean>;
+  liveMode?: boolean;
+  blocked?: boolean;
 }
 
 interface FormErrors {
@@ -32,7 +35,7 @@ function monitorToInput(monitor?: Monitor): MonitorInput {
   };
 }
 
-export function MonitorFormDialog({ monitor, onClose, onSave }: MonitorFormDialogProps) {
+export function MonitorFormDialog({ monitor, onClose, onSave, liveMode = false, blocked = false }: MonitorFormDialogProps) {
   const initial = useMemo(() => monitorToInput(monitor), [monitor]);
   const [title, setTitle] = useState(initial.title);
   const [instruction, setInstruction] = useState(initial.instruction);
@@ -44,9 +47,11 @@ export function MonitorFormDialog({ monitor, onClose, onSave }: MonitorFormDialo
   const [notificationsEnabled, setNotificationsEnabled] = useState(initial.notificationsEnabled);
   const [startActive, setStartActive] = useState(initial.startActive);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const formRef = useRef<HTMLFormElement>(null);
 
-  const submit = (event: FormEvent) => {
+  const submit = async (event: FormEvent) => {
     event.preventDefault();
     const nextErrors: FormErrors = {};
     if (!title.trim()) nextErrors.title = '監視名を入力してください';
@@ -57,11 +62,8 @@ export function MonitorFormDialog({ monitor, onClose, onSave }: MonitorFormDialo
       nextErrors.time = '確認時刻を入力してください';
     }
     if (sourceUrl.trim()) {
-      try {
-        const url = new URL(sourceUrl.trim());
-        if (!['http:', 'https:'].includes(url.protocol)) throw new Error('invalid protocol');
-      } catch {
-        nextErrors.sourceUrl = 'http:// または https:// で始まるURLを入力してください';
+      if (!isSafePublicHttpsUrl(sourceUrl.trim())) {
+        nextErrors.sourceUrl = '公開ネットワーク上の https:// URLを入力してください';
       }
     }
     setErrors(nextErrors);
@@ -72,18 +74,25 @@ export function MonitorFormDialog({ monitor, onClose, onSave }: MonitorFormDialo
       return;
     }
 
-    onSave({
-      title,
-      instruction,
-      category,
-      sourceUrl,
-      frequency,
-      time: normalizeScheduleTime(time),
-      severity,
-      notificationsEnabled,
-      startActive,
-      origin: initial.origin
-    });
+    setSaving(true);
+    setSaveError('');
+    try {
+      const saved = await onSave({
+        title,
+        instruction,
+        category,
+        sourceUrl,
+        frequency,
+        time: normalizeScheduleTime(time),
+        severity,
+        notificationsEnabled,
+        startActive,
+        origin: initial.origin
+      });
+      if (!saved) setSaveError('保存できませんでした。接続状態を確認して、もう一度お試しください。');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -239,23 +248,25 @@ export function MonitorFormDialog({ monitor, onClose, onSave }: MonitorFormDialo
                 <span className="switch-control" aria-hidden="true" />
                 <span>
                   <strong>保存後に稼働</strong>
-                  <small>接続前はデモ実行のみです</small>
+                  <small>{liveMode ? '保存後、設定した予定で確認します' : '接続前はデモ実行のみです'}</small>
                 </span>
               </label>
             </div>
           </div>
         </div>
 
-        <div className="form-disclaimer">
+        <div className={liveMode ? 'form-disclaimer is-live' : 'form-disclaimer'}>
           <Globe2 size={18} aria-hidden="true" />
-          <p>現在はローカル試作版です。保存しても外部データ取得は開始されません。</p>
+          <p>{liveMode ? '監視サービスへ保存します。稼働を有効にすると、次回予定から自動確認の対象になります。' : '現在はローカル試作版です。保存しても外部データ取得は開始されません。'}</p>
         </div>
 
+        {saveError ? <div className="form-alert" role="alert">{saveError}</div> : null}
+
         <footer className="modal-actions sticky-actions">
-          <button type="button" className="button secondary" onClick={onClose}>キャンセル</button>
-          <button type="submit" className="button primary">
+          <button type="button" className="button secondary" onClick={onClose} disabled={saving}>キャンセル</button>
+          <button type="submit" className="button primary" disabled={saving || blocked}>
             <Save size={18} aria-hidden="true" />
-            {monitor ? '変更を保存' : '監視項目を保存'}
+            {saving ? '保存中…' : monitor ? '変更を保存' : '監視項目を保存'}
           </button>
         </footer>
       </form>

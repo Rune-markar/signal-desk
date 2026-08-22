@@ -561,6 +561,25 @@ summary:focus-visible {
   line-height: 1.6;
 }
 
+.operation-error-banner {
+  min-height: 50px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #e7aaa4;
+  border-radius: 13px;
+  padding: 7px 8px 7px 14px;
+  color: #7c1f18;
+  background: #fff0ee;
+  box-shadow: var(--shadow-sm);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.operation-error-banner > svg { flex: none; }
+
 .demo-icon {
   width: 38px;
   height: 38px;
@@ -1663,6 +1682,10 @@ summary:focus-visible {
   line-height: 1.65;
 }
 
+.transfer-callout .button {
+  flex: 0 0 auto;
+}
+
 .storage-summary {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1690,11 +1713,83 @@ summary:focus-visible {
   font-size: 9px;
 }
 
+.migration-blockers {
+  margin-top: 12px;
+  border: 1px solid #e8b8b2;
+  border-radius: 10px;
+  padding: 13px 14px;
+  color: #7c2d25;
+  background: #fff4f2;
+}
+
+.migration-blocker-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+}
+
+.migration-blockers p {
+  margin: 7px 0 0;
+  font-size: 10px;
+  line-height: 1.65;
+}
+
+.migration-blockers ul {
+  display: grid;
+  gap: 7px;
+  margin: 10px 0 0;
+  padding-left: 20px;
+}
+
+.migration-blockers li {
+  min-width: 0;
+  font-size: 10px;
+}
+
+.migration-blockers li strong,
+.migration-blockers li span {
+  display: block;
+}
+
+.migration-blockers li span {
+  overflow-wrap: anywhere;
+  margin-top: 2px;
+  color: #8b4a43;
+}
+
 .settings-actions-row {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 14px;
+}
+
+.login-form {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+  margin-top: 14px;
+  border-radius: 10px;
+  padding: 14px;
+  background: #f3f7f6;
+}
+
+.login-form .field { min-width: 0; }
+
+.compact-actions { margin-top: 0; }
+
+.inline-error {
+  margin: 10px 2px 0;
+  color: var(--red);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.form-disclaimer.is-live {
+  color: #145d4a;
+  background: #edf8f3;
 }
 
 .modal-backdrop {
@@ -2519,6 +2614,18 @@ summary:focus-visible {
   .settings-callout {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .transfer-callout .button {
+    width: 100%;
+  }
+
+  .login-form {
+    grid-template-columns: 1fr;
+  }
+
+  .login-form .button {
+    width: 100%;
   }
 
   .storage-summary {

@@ -9,9 +9,9 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'Signal Desk - 監視・通知センター試作版',
+        name: 'Signal Desk - 監視・通知センター',
         short_name: 'Signal Desk',
-        description: '監視項目と通知の管理画面を試すブラウザ内機能試作版',
+        description: '監視項目、実行履歴、アプリ内通知、Web Pushを一か所で管理',
         theme_color: '#123f4a',
         background_color: '#f3f5f3',
         display: 'standalone',
@@ -27,6 +27,7 @@ export default defineConfig({
         ]
       },
       workbox: {
+        importScripts: ['push-sw.js'],
         globPatterns: ['**/*.{js,css,html}'],
         runtimeCaching: [
           {

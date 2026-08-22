@@ -20,9 +20,11 @@ interface OverviewPageProps {
   onNavigate: (route: AppRoute) => void;
   onAdd: () => void;
   onRun: (monitorId: string) => void;
+  liveMode?: boolean;
+  busy?: boolean;
 }
 
-export function OverviewPage({ state, onNavigate, onAdd, onRun }: OverviewPageProps) {
+export function OverviewPage({ state, onNavigate, onAdd, onRun, liveMode = false, busy = false }: OverviewPageProps) {
   const active = activeMonitors(state);
   const issues = issueMonitors(state);
   const unread = unreadNotifications(state);
@@ -35,9 +37,9 @@ export function OverviewPage({ state, onNavigate, onAdd, onRun }: OverviewPagePr
       <PageHeader
         eyebrow="OVERVIEW"
         title="今日の監視状況"
-        description="要対応の通知と、外部接続後の予定として保存した確認をまとめています。"
+        description={liveMode ? '要対応の通知と、これから自動実行する確認をまとめています。' : '要対応の通知と、外部接続後の予定として保存した確認をまとめています。'}
         actions={
-          <button className="button primary" onClick={onAdd}>
+          <button className="button primary" onClick={onAdd} disabled={busy}>
             <Plus size={18} aria-hidden="true" />監視項目を追加
           </button>
         }
@@ -46,7 +48,7 @@ export function OverviewPage({ state, onNavigate, onAdd, onRun }: OverviewPagePr
       <section className="metric-grid" aria-label="監視状況の概要">
         <button className="metric-card" onClick={() => onNavigate('monitors')}>
           <span className="metric-icon icon-green"><ListChecks size={20} aria-hidden="true" /></span>
-          <span><small>有効な設定</small><strong>{active.length}</strong><em>件（未接続）</em></span>
+          <span><small>有効な設定</small><strong>{active.length}</strong><em>{liveMode ? '件を自動確認' : '件（未接続）'}</em></span>
         </button>
         <button className="metric-card" onClick={() => onNavigate('inbox')}>
           <span className="metric-icon icon-amber"><Bell size={20} aria-hidden="true" /></span>
@@ -74,7 +76,7 @@ export function OverviewPage({ state, onNavigate, onAdd, onRun }: OverviewPagePr
           {attention.length === 0 ? (
             <div className="healthy-state">
               <CheckCircle2 size={26} aria-hidden="true" />
-              <div><strong>いま確認が必要な通知はありません</strong><p>外部接続後に、ここへ実際の通知が表示されます。</p></div>
+              <div><strong>いま確認が必要な通知はありません</strong><p>{liveMode ? '条件に一致すると、ここへ実際の通知が表示されます。' : '外部接続後に、ここへ実際の通知が表示されます。'}</p></div>
             </div>
           ) : (
             <div className="attention-list">
@@ -94,7 +96,7 @@ export function OverviewPage({ state, onNavigate, onAdd, onRun }: OverviewPagePr
 
         <section className="panel upcoming-panel">
           <div className="panel-heading">
-            <div><p className="eyebrow">UP NEXT</p><h2>次回予定（接続後）</h2></div>
+            <div><p className="eyebrow">UP NEXT</p><h2>{liveMode ? '次回予定' : '次回予定（接続後）'}</h2></div>
           </div>
           {upcoming.length === 0 ? (
             <div className="small-empty"><Clock3 size={24} /><p>有効な監視設定がありません。</p></div>
@@ -110,7 +112,7 @@ export function OverviewPage({ state, onNavigate, onAdd, onRun }: OverviewPagePr
                     <strong>{monitor.title}</strong>
                     <MonitorStatusBadge status={monitor.status} />
                   </div>
-                  <button className="icon-button subtle" onClick={() => onRun(monitor.id)} aria-label={`${monitor.title}のデモ結果を追加`}>
+                  <button className="icon-button subtle" onClick={() => onRun(monitor.id)} aria-label={`${monitor.title}を${liveMode ? '今すぐ確認' : 'デモ実行'}`} disabled={busy}>
                     <RotateCw size={18} aria-hidden="true" />
                   </button>
                 </li>

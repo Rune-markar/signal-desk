@@ -6,7 +6,7 @@ import { PageHeader } from '../components/PageHeader';
 
 type HistoryFilter = 'all' | RunStatus;
 
-export function HistoryPage({ state }: { state: AppState }) {
+export function HistoryPage({ state, liveMode = false }: { state: AppState; liveMode?: boolean }) {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<HistoryFilter>('all');
   const filtered = useMemo(() => {
@@ -45,7 +45,7 @@ export function HistoryPage({ state }: { state: AppState }) {
         <section className="empty-state">
           <span className="empty-icon"><FileClock size={28} /></span>
           <h2>該当する実行履歴はありません</h2>
-          <p>監視項目で「デモ結果を追加」を実行すると、ここに未確認のデモ結果が追加されます。</p>
+          <p>{liveMode ? '自動確認または「今すぐ確認」を実行すると、ここに結果が追加されます。' : '監視項目で「デモ結果を追加」を実行すると、ここに未確認のデモ結果が追加されます。'}</p>
         </section>
       ) : (
         <section className="timeline" aria-label="実行履歴一覧">

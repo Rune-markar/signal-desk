@@ -1,8 +1,9 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 import { emptyState } from './domain/store';
+import { saveState, STORAGE_KEY } from './domain/storage';
 import { AppStateProvider } from './state/AppStateContext';
 
 function renderEmptyApp() {
@@ -19,6 +20,7 @@ describe('Signal Desk', () => {
     window.localStorage.clear();
     window.location.hash = '#/monitors';
   });
+  afterEach(() => vi.unstubAllGlobals());
 
   it('creates, pauses, resumes, and manually runs a monitor', async () => {
     const user = userEvent.setup();
@@ -99,5 +101,67 @@ describe('Signal Desk', () => {
     );
 
     expect(await screen.findByRole('alert')).toHaveTextContent('変更を保存できません');
+  });
+
+  it('opens the inbox from a Push notification query parameter', () => {
+    window.history.replaceState(null, '', '/?view=inbox&notification=notification-1');
+    render(
+      <AppStateProvider initialState={emptyState()} storage={window.localStorage}>
+        <App />
+      </AppStateProvider>
+    );
+
+    expect(screen.getByRole('heading', { name: '通知' })).toBeInTheDocument();
+    expect(window.location.hash).toBe('#/inbox');
+  });
+
+  it('names legacy HTTP monitors that must be fixed before migration', async () => {
+    const localState = {
+      ...emptyState(),
+      monitors: [{
+        id: 'legacy-http',
+        title: '旧HTTP監視',
+        instruction: '更新を確認する',
+        category: 'website' as const,
+        sourceUrl: 'http://legacy.example.com/status',
+        status: 'paused' as const,
+        schedule: { frequency: 'daily' as const, time: '09:00', timezone: 'Asia/Tokyo' },
+        severity: 'warning' as const,
+        notificationsEnabled: true,
+        origin: 'native' as const,
+        lastOutcome: 'never' as const,
+        lastSummary: '初回確認を待っています',
+        consecutiveFailures: 0,
+        createdAt: '2026-08-22T00:00:00.000Z',
+        updatedAt: '2026-08-22T00:00:00.000Z'
+      }]
+    };
+    saveState(window.localStorage, localState, STORAGE_KEY);
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith('/api/auth/status')) {
+        return new Response(JSON.stringify({ available: true, authenticated: true }), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      if (url.endsWith('/api/state')) {
+        return new Response(JSON.stringify({ state: emptyState() }), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      return new Response(null, { status: 404 });
+    }));
+    window.location.hash = '#/settings';
+
+    render(
+      <AppStateProvider storage={window.localStorage} connectToBackend>
+        <App />
+      </AppStateProvider>
+    );
+
+    expect(await screen.findByText('公開HTTPSでないURLがあるため移行できません')).toBeInTheDocument();
+    expect(screen.getByText('旧HTTP監視')).toBeInTheDocument();
+    expect(screen.getByText('http://legacy.example.com/status')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'URLの修正が必要' })).toBeDisabled();
   });
 });

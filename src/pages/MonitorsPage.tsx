@@ -15,9 +15,11 @@ interface MonitorsPageProps {
   onDelete: (monitor: Monitor) => void;
   onToggle: (monitorId: string) => void;
   onRun: (monitorId: string) => void;
+  liveMode?: boolean;
+  busy?: boolean;
 }
 
-export function MonitorsPage({ state, onAdd, onImport, onEdit, onDelete, onToggle, onRun }: MonitorsPageProps) {
+export function MonitorsPage({ state, onAdd, onImport, onEdit, onDelete, onToggle, onRun, liveMode = false, busy = false }: MonitorsPageProps) {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<MonitorFilter>('all');
 
@@ -38,8 +40,8 @@ export function MonitorsPage({ state, onAdd, onImport, onEdit, onDelete, onToggl
         description="何を、いつ、どの条件で確認するかを管理します。"
         actions={
           <div className="header-button-group">
-            <button className="button secondary" onClick={onImport}><Sparkles size={18} />ChatGPTから移行</button>
-            <button className="button primary" onClick={onAdd}><Plus size={18} />新しく追加</button>
+            <button className="button secondary" onClick={onImport} disabled={busy}><Sparkles size={18} />ChatGPTから移行</button>
+            <button className="button primary" onClick={onAdd} disabled={busy}><Plus size={18} />新しく追加</button>
           </div>
         }
       />
@@ -73,8 +75,8 @@ export function MonitorsPage({ state, onAdd, onImport, onEdit, onDelete, onToggl
           <p>{state.monitors.length === 0 ? '最初の監視項目を追加するか、ChatGPTのScheduled taskを移行してください。' : '検索語または状態フィルターを変更してください。'}</p>
           {state.monitors.length === 0 ? (
             <div className="empty-actions">
-              <button className="button primary" onClick={onAdd}><Plus size={18} />最初の監視を追加</button>
-              <button className="button secondary" onClick={onImport}><Sparkles size={18} />ChatGPTから移行</button>
+              <button className="button primary" onClick={onAdd} disabled={busy}><Plus size={18} />最初の監視を追加</button>
+              <button className="button secondary" onClick={onImport} disabled={busy}><Sparkles size={18} />ChatGPTから移行</button>
             </div>
           ) : (
             <button className="button secondary" onClick={() => { setQuery(''); setFilter('all'); }}>絞り込みを解除</button>
@@ -91,6 +93,8 @@ export function MonitorsPage({ state, onAdd, onImport, onEdit, onDelete, onToggl
               onDelete={() => onDelete(monitor)}
               onToggle={() => onToggle(monitor.id)}
               onRun={() => onRun(monitor.id)}
+              liveMode={liveMode}
+              busy={busy}
             />
           ))}
         </section>

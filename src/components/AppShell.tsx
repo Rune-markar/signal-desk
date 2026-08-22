@@ -9,6 +9,7 @@ import {
   type LucideIcon
 } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
+import type { ConnectionState } from '../state/AppStateContext';
 
 export type AppRoute = 'overview' | 'monitors' | 'inbox' | 'history' | 'settings';
 
@@ -31,11 +32,12 @@ interface AppShellProps {
   route: AppRoute;
   unreadCount: number;
   storageStatus: 'saved' | 'error';
+  connection: ConnectionState;
   children: ReactNode;
   onNavigate: (route: AppRoute) => void;
 }
 
-export function AppShell({ route, unreadCount, storageStatus, children, onNavigate }: AppShellProps) {
+export function AppShell({ route, unreadCount, storageStatus, connection, children, onNavigate }: AppShellProps) {
   const [online, setOnline] = useState(() => navigator.onLine);
 
   useEffect(() => {
@@ -48,6 +50,25 @@ export function AppShell({ route, unreadCount, storageStatus, children, onNaviga
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
+
+  const serviceLabel = connection.status === 'connected'
+    ? '監視サービス接続中'
+    : connection.status === 'checking'
+      ? '接続を確認中'
+      : connection.status === 'signed-out'
+        ? 'ログインが必要'
+        : connection.status === 'offline'
+          ? 'オフライン表示'
+          : 'ローカルモード';
+  const serviceDetail = storageStatus === 'error'
+    ? '端末保存エラー'
+    : connection.status === 'connected'
+      ? '自動監視・同期が有効'
+      : connection.status === 'signed-out'
+        ? '設定から接続できます'
+        : online
+          ? '端末内データを表示'
+          : 'ネット接続なし';
 
   return (
     <div className="app-shell">
@@ -82,10 +103,10 @@ export function AppShell({ route, unreadCount, storageStatus, children, onNaviga
         </nav>
 
         <div className="sidebar-status">
-          <span className={online ? 'connection-dot is-online' : 'connection-dot'} />
+          <span className={connection.status === 'connected' && online ? 'connection-dot is-online' : 'connection-dot'} />
           <div>
-            <strong>{online ? 'ネット接続あり' : 'ネット接続なし'}</strong>
-            <small>{storageStatus === 'error' ? '端末保存エラー' : online ? '監視サービス未接続' : '端末内データを表示'}</small>
+            <strong>{serviceLabel}</strong>
+            <small>{serviceDetail}</small>
           </div>
         </div>
       </aside>
@@ -98,9 +119,9 @@ export function AppShell({ route, unreadCount, storageStatus, children, onNaviga
             </span>
             <strong>Signal Desk</strong>
           </button>
-          <div className={online ? 'online-pill' : 'online-pill is-offline'}>
-            {online ? <Wifi size={16} aria-hidden="true" /> : <WifiOff size={16} aria-hidden="true" />}
-            <span>{online ? 'ネット接続あり' : 'ネット接続なし'}</span>
+          <div className={connection.status === 'connected' && online ? 'online-pill' : 'online-pill is-offline'}>
+            {connection.status === 'connected' && online ? <Wifi size={16} aria-hidden="true" /> : <WifiOff size={16} aria-hidden="true" />}
+            <span>{serviceLabel}</span>
           </div>
           <button
             className="icon-button topbar-notification"
