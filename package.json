@@ -12,7 +12,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "npm run test && npm run build && npm run build:worker",
-    "db:migrate:local": "wrangler d1 migrations apply DB --local"
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "remote:check": "node scripts/remote-environment.mjs check",
+    "remote:setup": "node scripts/remote-environment.mjs bootstrap",
+    "remote:verify": "node scripts/remote-environment.mjs verify",
+    "remote:guard-deploy": "node scripts/remote-environment.mjs guard-deploy"
   },
   "dependencies": {
     "@cloudflare/workers-oauth-provider": "^0.10.3",

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "project": "Signal Desk",
+  "notionPage": "https://app.notion.com/p/3ce01092fbe28122945ff5ed285f16a7",
+  "baselineBranch": "main",
+  "runtime": { "nodeMajor": 22 },
+  "requiredCommands": ["git", "node", "npm"],
+  "requiredEnvironment": [],
+  "bootstrapCommands": { "all": ["npm ci"] },
+  "verifyCommands": ["npm run check"],
+  "roles": {
+    "development": {},
+    "cloudflare-publisher": {},
+    "browser-device": {}
+  },
+  "deploy": { "authorizedRoles": ["cloudflare-publisher"] },
+  "sourcesOfTruth": {
+    "code": "GitHub / Rune-markar/signal-desk",
+    "operations": "Notion / Signal Desk",
+    "productionData": "Cloudflare D1, KV, Worker secrets, Cron, and application notification history"
+  },
+  "localOnlyTasks": ["OAuth browser login", "PWA installation", "Web Push verification"]
+}
